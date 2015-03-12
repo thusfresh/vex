@@ -48,8 +48,8 @@ defmodule Vex do
     results(data, Vex.Extract.settings(data))
   end
   def results(data, settings) do
-    for {attribute, validations} <- settings do
-      result({data, attribute}, validations)
+    for {attribute, vs} <- settings do
+      result({data, attribute}, (if is_function(vs), do: [by: vs], else: vs))
     end
     |> List.flatten
   end
