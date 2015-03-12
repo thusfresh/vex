@@ -173,15 +173,28 @@ You can also just provide a custom function for validation instead of
 a validator name:
 
 ```elixir
-Vex.valid?(user, password: fn (pass) -> byte_size(pass) > 4 end)
-Vex.valid? user, password: &valid_password?/1
-Vex.valid?(user, password: &(&1 != "god"))
+iex> Vex.valid?(user, password: fn (pass) -> byte_size(pass) > 4 end)
+iex> Vex.valid? user, password: &valid_password?/1
+iex> Vex.valid?(user, password: &(&1 != "god"))
+```
+
+Instead of returning a boolean the validate function may return `:ok`
+on success, or `{:error, "a message"}` on error:
+
+```
+iex> Vex.valid?(user, password: fn (password) ->
+...>   if valid_password?(p) do
+...>     :ok
+...>   else
+...>     {:error, "#{password} isn't a valid password"}
+...>   end
+...> end)
 ```
 
 Or explicitly using `:by`:
 
 ```elixir
-Vex.valid?(user, age: [by: &(&1 > 18)])
+iex> Vex.valid?(user, age: [by: &(&1 > 18)])
 ```
 
 This validation can be skipped for `nil` or blank values by including
