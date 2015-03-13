@@ -14,6 +14,9 @@ defmodule Vex.Validators.Each do
       iex> Vex.Validators.Each.validate([1, :b], &is_integer/1)
       {:error, ["must be valid"]}
 
+      iex> Vex.Validators.Each.validate(1, &is_integer/1)
+      {:error, :not_enumerable}
+
       iex> Vex.Validators.Each.validate([1, 2], [validators: &is_integer/1])
       :ok
 
@@ -35,10 +38,15 @@ defmodule Vex.Validators.Each do
   def validate(list, options) do
     unless_skipping(list, options) do
       validators = Dict.fetch!(options, @validators_key)
-      case list
-           |> Enum.map(&Vex.result(&1, validators))
-           |> List.flatten()
-           |> Enum.filter(fn ({:ok, _, _}) -> false; (_) -> true end) do
+      try do
+        list
+          |> Enum.map(&Vex.result(&1, validators))
+          |> List.flatten()
+          |> Enum.filter(fn ({:ok, _, _}) -> false; (_) -> true end)
+      rescue
+        Protocol.UndefinedError ->
+          {:error, :not_enumerable}
+       else
         [] ->
           :ok
         errors when is_list(errors) ->
