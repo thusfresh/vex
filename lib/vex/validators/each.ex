@@ -13,13 +13,30 @@ defmodule Vex.Validators.Each do
 
       iex> Vex.Validators.Each.validate([1, :b], &is_integer/1)
       {:error, ["must be valid"]}
+
+      iex> Vex.Validators.Each.validate([1, 2], [validators: &is_integer/1])
+      :ok
+
+      iex> Vex.Validators.Each.validate(
+      ...>   [1, 2], [validators: [by: &is_integer/1], allow_nil: true])
+      :ok
+
+      iex> Vex.Validators.Each.validate(
+      ...>   nil, [validators: [by: &is_integer/1], allow_nil: true])
+      :ok
   """
   use Vex.Validator
 
+  @validators_key :validators
+
+  def validate(list, func) when is_function(func) do
+    validate(list, [{@validators_key, func}])
+  end
   def validate(list, options) do
     unless_skipping(list, options) do
+      validators = Dict.fetch!(options, @validators_key)
       case list
-           |> Enum.map(&Vex.result(&1, options))
+           |> Enum.map(&Vex.result(&1, validators))
            |> List.flatten()
            |> Enum.filter(fn ({:ok, _, _}) -> false; (_) -> true end) do
         [] ->
@@ -29,4 +46,5 @@ defmodule Vex.Validators.Each do
       end
     end
   end
+
 end
